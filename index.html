@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smart Tuition App</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .login-box {
+        max-width: 420px;
+        margin: 100px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    input, select, textarea, button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    textarea {
+        height: 100px;
+        resize: vertical;
+    }
+
+    button {
+        background: #5b5bd6;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    button:hover {
+        background: #4141b8;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .header {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .header button {
+        width: auto;
+        padding: 10px 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    .message {
+        padding: 12px;
+        margin: 10px 0;
+        background: #f2f2ff;
+        border-left: 5px solid #5b5bd6;
+        border-radius: 8px;
+    }
+
+    .homework {
+        padding: 15px;
+        margin: 10px 0;
+        background: #effff2;
+        border-left: 5px solid #28a745;
+        border-radius: 8px;
+    }
+
+    .class-title {
+        color: #5b5bd6;
+        margin-top: 20px;
+    }
+
+    .delete-btn {
+        background: #e53935;
+        width: auto;
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .file-info {
+        color: #555;
+        font-size: 14px;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-box">
+
+    <h1>🎓 Smart Tuition</h1>
+    <p>Login to continue</p>
+
+    <select id="role">
+        <option value="teacher">Teacher</option>
+        <option value="student">Student</option>
+    </select>
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Enter Password"
+    >
+
+    <button onclick="login()">Login</button>
+
+    <p id="error" style="color:red;"></p>
+
+</div>
+
+
+<!-- APP PAGE -->
+<div id="appPage" class="container hidden">
+
+    <div class="header">
+        <div>
+            <h2>🎓 Smart Tuition App</h2>
+            <p id="welcome"></p>
+        </div>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+
+    <!-- TEACHER PANEL -->
+    <div id="teacherPanel" class="hidden">
+
+        <div class="card">
+            <h2>📢 Send Message</h2>
+
+            <textarea
+                id="messageInput"
+                placeholder="Write message for students..."
+            ></textarea>
+
+            <button onclick="sendMessage()">
+                Send Message
+            </button>
+        </div>
+
+
+        <div class="card">
+            <h2>📚 Upload Homework</h2>
+
+            <select id="homeworkClass">
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+            </select>
+
+            <input
+                type="text"
+                id="subject"
+                placeholder="Subject (Example: Maths)"
+            >
+
+            <textarea
+                id="homeworkText"
+                placeholder="Write homework..."
+            ></textarea>
+
+            <input
+                type="file"
+                id="homeworkFile"
+            >
+
+            <button onclick="uploadHomework()">
+                Upload Homework
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- STUDENT CLASS SELECTOR -->
+    <div id="studentClassPanel" class="card hidden">
+
+        <h2>👨‍🎓 Select Your Class</h2>
+
+        <select id="studentClass" onchange="displayAll()">
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+        </select>
+
+    </div>
+
+
+    <!-- MESSAGES -->
+    <div class="card">
+
+        <h2>💬 Messages</h2>
+
+        <div id="messages"></div>
+
+    </div>
+
+
+    <!-- HOMEWORK -->
+    <div class="card">
+
+        <h2>📝 Homework</h2>
+
+        <div id="homeworkList"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+// ===============================
+// PASSWORDS
+// ===============================
+
+const teacherPassword = "#####";
+const studentPassword = "student123";
+
+let currentRole = "";
+let currentClass = "9";
+
+
+// ===============================
+// LOGIN
+// ===============================
+
+function login() {
+
+    const role = document.getElementById("role").value;
+    const password = document.getElementById("password").value;
+    const error = document.getElementById("error");
+
+    if (
+        role === "teacher" &&
+        password === teacherPassword
+    ) {
+
+        currentRole = "teacher";
+
+    }
+
+    else if (
+        role === "student" &&
+        password === studentPassword
+    ) {
+
+        currentRole = "student";
+
+    }
+
+    else {
+
+        error.innerText = "❌ Incorrect Password!";
+        return;
+
+    }
+
+    document.getElementById("loginPage")
+        .classList.add("hidden");
+
+    document.getElementById("appPage")
+        .classList.remove("hidden");
+
+    document.getElementById("welcome").innerText =
+        "Welcome, " + currentRole;
+
+    if (currentRole === "teacher") {
+
+        document.getElementById("teacherPanel")
+            .classList.remove("hidden");
+
+    }
+
+    else {
+
+        document.getElementById("studentClassPanel")
+            .classList.remove("hidden");
+
+    }
+
+    displayAll();
+
+}
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+function logout() {
+
+    currentRole = "";
+
+    document.getElementById("appPage")
+        .classList.add("hidden");
+
+    document.getElementById("loginPage")
+        .classList.remove("hidden");
+
+    document.getElementById("password").value = "";
+
+}
+
+
+// ===============================
+// SEND MESSAGE
+// ===============================
+
+function sendMessage() {
+
+    const text =
+        document.getElementById("messageInput").value;
+
+    if (text.trim() === "") {
+
+        alert("Please write a message!");
+        return;
+
+    }
+
+    let messages =
+        JSON.parse(localStorage.getItem("messages")) || [];
+
+    messages.push({
+        text: text,
+        date: new Date().toLocaleString()
+    });
+
+    localStorage.setItem(
+        "messages",
+        JSON.stringify(messages)
+    );
+
+    document.getElementById("messageInput").value = "";
+
+    displayAll();
+
+}
+
+
+// ===============================
+// UPLOAD HOMEWORK
+// ===============================
+
+function uploadHomework() {
+
+    const className =
+        document.getElementById("homeworkClass").value;
+
+    const subject =
+        document.getElementById("subject").value;
+
+    const homework =
+        document.getElementById("homeworkText").value;
+
+    const file =
+        document.getElementById("homeworkFile").files[0];
+
+    if (
+        subject.trim() === "" ||
+        homework.trim() === ""
+    ) {
+
+        alert("Please enter subject and homework!");
+        return;
+
+    }
+
+    let homeworkData =
+        JSON.parse(localStorage.getItem("homework")) || [];
+
+    let fileName = "";
+
+    if (file) {
+        fileName = file.name;
+    }
+
+    homeworkData.push({
+
+        className: className,
+        subject: subject,
+        homework: homework,
+        fileName: fileName,
+        date: new Date().toLocaleString()
+
+    });
+
+    localStorage.setItem(
+        "homework",
+        JSON.stringify(homeworkData)
+    );
+
+    document.getElementById("subject").value = "";
+    document.getElementById("homeworkText").value = "";
+    document.getElementById("homeworkFile").value = "";
+
+    alert("✅ Homework uploaded successfully!");
+
+    displayAll();
+
+}
+
+
+// ===============================
+// DISPLAY EVERYTHING
+// ===============================
+
+function displayAll() {
+
+    if (currentRole === "student") {
+
+        currentClass =
+            document.getElementById("studentClass").value;
+
+    }
+
+    displayMessages();
+    displayHomework();
+
+}
+
+
+// ===============================
+// DISPLAY MESSAGES
+// ===============================
+
+function displayMessages() {
+
+    const messages =
+        JSON.parse(localStorage.getItem("messages")) || [];
+
+    const container =
+        document.getElementById("messages");
+
+    container.innerHTML = "";
+
+    if (messages.length === 0) {
+
+        container.innerHTML =
+            "<p>No messages yet.</p>";
+
+        return;
+
+    }
+
+    messages
+        .slice()
+        .reverse()
+        .forEach((message, index) => {
+
+            container.innerHTML += `
+
+                <div class="message">
+
+                    <strong>📢 Teacher</strong>
+
+                    <p>${message.text}</p>
+
+                    <small>${message.date}</small>
+
+                </div>
+
+            `;
+
+        });
+
+}
+
+
+// ===============================
+// DISPLAY HOMEWORK
+// ===============================
+
+function displayHomework() {
+
+    const homeworkData =
+        JSON.parse(localStorage.getItem("homework")) || [];
+
+    const container =
+        document.getElementById("homeworkList");
+
+    container.innerHTML = "";
+
+    let selectedClass = currentClass;
+
+    if (currentRole === "teacher") {
+
+        selectedClass =
+            document.getElementById("homeworkClass").value;
+
+    }
+
+    const filteredHomework =
+        homeworkData.filter(
+            item =>
+            item.className === selectedClass
+        );
+
+    if (filteredHomework.length === 0) {
+
+        container.innerHTML =
+            "<p>No homework available.</p>";
+
+        return;
+
+    }
+
+    filteredHomework
+        .slice()
+        .reverse()
+        .forEach(item => {
+
+            container.innerHTML += `
+
+                <div class="homework">
+
+                    <h3>
+                        📖 ${item.subject}
+                    </h3>
+
+                    <p>
+                        ${item.homework}
+                    </p>
+
+                    ${
+                        item.fileName
+                        ? `<p class="file-info">
+                           📎 Attached File:
+                           ${item.fileName}
+                           </p>`
+                        : ""
+                    }
+
+                    <small>
+                        Uploaded:
+                        ${item.date}
+                    </small>
+
+                </div>
+
+            `;
+
+        });
+
+}
+
+</script>
+
+</body>
+</html>
